@@ -1,0 +1,4 @@
+<h1>Details Author</h1>
+<h2>Username: {{ author.username | upper }}</h2>
+<img src="{{ asset(author.picture) }}" alt="{{ author.id }}" class="img-fluid rounded-circle" style="width: 150px; height: 150px;">
+<p>Nombre de books: {{ author.nb_books }}</p>
