@@ -12,9 +12,9 @@ class AuthorForm extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('username')
-            ->add('email')
-            ->add('Ajouter',SubmitType::class)
+    ->add('username') // Ajoute un champ de type texte lié à la propriété 'username' de l'entité
+    ->add('email') // Ajoute un champ de type texte lié à la propriété 'email'
+    ->add('Ajouter', SubmitType::class) // Ajoute un bouton de soumission avec le label "Ajouter"
         ;
     }
 

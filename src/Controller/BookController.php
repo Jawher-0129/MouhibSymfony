@@ -21,58 +21,58 @@ final class BookController extends AbstractController
         ]);
     }
 
+    // Route pour ajouter un nouveau livre
+#[Route('/addBook', name: 'add_book')]
+public function addBook(EntityManagerInterface $em, Request $request): Response
+{
+    $book = new Book(); // Crée une nouvelle instance de l'entité Book
+    $book->setEnabled(true); // Active le livre par défaut (si vous utilisez un champ booléen "enabled")
+    
+    $form = $this->createForm(BookForm::class, $book); // Crée un formulaire basé sur la classe BookForm
+    $form->handleRequest($request); // Lie les données de la requête HTTP au formulaire
 
-    #[Route('/showAllBooks', name: 'showAllBooks')]
-    public function showAllBooks(BookRepository $repo): Response
+    if ($form->isSubmitted() && $form->isValid()) // Vérifie si le formulaire a été soumis et s’il est valide
     {
-        $book=$repo->findAll();
-        return $this->render('book/showAllBooks.html.twig', [
-            'books' => $book
-        ]);
-    }
-
-    #[Route('/addBook', name: 'add_book')]
-    public function addBook(EntityManagerInterface $em,Request $request): Response
-    {
-        $book=new Book();
-        $book->setEnabled(true);
-        $form=$this->createForm(BookForm::class,$book);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid())
-        {
-            $em->persist($book);
-            $em->flush();
-            return $this->redirectToRoute('showAllBooks');
-        }
-        return $this->render('book/addBook.html.twig', [
-            'form' => $form->createView()
-        ]);
-    }
-    #[Route('/deleteBook/{id}', name: 'deleteBook')]
-    public function deleteBook(int $id, BookRepository $bookRepository, EntityManagerInterface $em): Response
-    {
-        $book=$bookRepository->find($id);
-        $em->remove($book);
-        $em->flush();
-        return $this->redirectToRoute('showAllBooks');
+        $em->persist($book); // Prépare l'entité Book pour insertion
+        $em->flush(); // Exécute l'insertion en base de données
+        return $this->redirectToRoute('showAllBooks'); // Redirige vers la liste de tous les livres
     }
 
-    #[Route('/editBook/{id}', name: 'editBook')]
-    public function editBook(int $id, BookRepository $bookRepository, EntityManagerInterface $em, Request $request): Response
+    return $this->render('book/addBook.html.twig', [ // Affiche le formulaire si non soumis ou invalide
+        'form' => $form->createView()
+    ]);
+}
+
+// Route pour supprimer un livre par son identifiant
+#[Route('/deleteBook/{id}', name: 'deleteBook')]
+public function deleteBook(int $id, BookRepository $bookRepository, EntityManagerInterface $em): Response
+{
+    $book = $bookRepository->find($id); // Recherche le livre par son ID
+    $em->remove($book); // Marque le livre pour suppression
+    $em->flush(); // Exécute la suppression dans la base de données
+    return $this->redirectToRoute('showAllBooks'); // Redirige vers la liste des livres
+}
+
+// Route pour modifier un livre existant
+#[Route('/editBook/{id}', name: 'editBook')]
+public function editBook(int $id, BookRepository $bookRepository, EntityManagerInterface $em, Request $request): Response
+{
+    $book = $bookRepository->find($id); // Récupère le livre à modifier
+    $form = $this->createForm(BookForm::class, $book); // Crée un formulaire pré-rempli avec les données du livre
+    $form->handleRequest($request); // Lie les données envoyées au formulaire
+
+    if ($form->isSubmitted() && $form->isValid()) // Vérifie si le formulaire est soumis et valide
     {
-        $book=$bookRepository->find($id);
-        $form=$this->createForm(BookForm::class,$book);
-        $form->handleRequest($request);
-        if ($form->isSubmitted() && $form->isValid())
-        {
-            $em->persist($book);
-            $em->flush();
-            return $this->redirectToRoute('showAllBooks');
-        }
-        return $this->render('book/addBook.html.twig', [
-            'form' => $form->createView()
-        ]);
+        $em->persist($book); // Prépare les modifications à être enregistrées
+        $em->flush(); // Enregistre les modifications en base
+        return $this->redirectToRoute('showAllBooks'); // Redirige vers la liste des livres
     }
+
+    return $this->render('book/addBook.html.twig', [ // Réutilise le même template que pour l’ajout
+        'form' => $form->createView()
+    ]);
+}
+
 
     
 

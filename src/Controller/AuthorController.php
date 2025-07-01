@@ -49,68 +49,76 @@ final class AuthorController extends AbstractController
         'author' => $authors[$id - 1]
     ]);
     }
+// Route pour afficher tous les auteurs
+#[Route('/showAllAuthors', name: 'showAllAuthors')]
+public function showAllAuthors(AuthorRepository $authorRepository): Response
+{
+    $authors = $authorRepository->findAll(); // Récupère tous les auteurs depuis la base de données
+    return $this->render('author/showAllAuthors.html.twig', [ // Rend la vue Twig avec la liste des auteurs
+        'authors' => $authors
+    ]);
+}
 
-    #[Route('/showAllAuthors',name:'showAllAuthors')]
-    public function showAllAuthors(AuthorRepository $authorRepository): Response
+// Route pour ajouter un nouvel auteur
+#[Route('/addAuthor', name: 'addAuthor')]
+public function addAuthor(EntityManagerInterface $em, Request $request): Response
+{
+    $author = new Author(); // Crée une nouvelle instance de l'entité Author
+    $form = $this->createForm(AuthorForm::class, $author); // Crée un formulaire basé sur AuthorForm et lié à $author
+    $form->handleRequest($request); // Traite la requête HTTP et remplit le formulaire
+
+    if ($form->isSubmitted() && $form->isValid()) // Vérifie si le formulaire est soumis et valide
     {
-        $authors=$authorRepository->findAll();
-        return $this->render('author/showAllAuthors.html.twig', [
-            'authors' => $authors
-        ]);
+        $em->persist($author); // Prépare l'entité Author à être enregistrée
+        $em->flush(); // Exécute l'insertion dans la base de données
+        return $this->redirectToRoute('showAllAuthors'); // Redirige vers la liste des auteurs
     }
 
-    #[Route('/addAuthor', name: 'addAuthor')]
-    public function addAuthor(EntityManagerInterface $em,Request $request): Response
-    {
-        $author=new Author();
-        $form=$this->createForm(AuthorForm::class,$author);
-        $form->handleRequest($request);
+    return $this->render('author/addAuthor.html.twig', [ // Affiche le formulaire si non soumis ou invalide
+        'form' => $form->createView()
+    ]);
+}
 
-        if ($form->isSubmitted() && $form->isValid())
-        {
-            $em->persist($author);
-            $em->flush();
-            return $this->redirectToRoute('showAllAuthors');
-        }
-        return $this->render('author/addAuthor.html.twig', [
-            'form' => $form->createView()
-        ]);
+// Route pour supprimer un auteur par son identifiant
+#[Route('/deleteAuthor/{id}', name: 'deleteAuthor')]
+public function deleteAuthor(int $id, AuthorRepository $authorRepository, EntityManagerInterface $em): Response
+{
+    $author = $authorRepository->find($id); // Recherche l’auteur par son id
+    $em->remove($author); // Marque l’auteur pour suppression
+    $em->flush(); // Exécute la suppression dans la base de données
+    return $this->redirectToRoute('showAllAuthors'); // Redirige vers la liste des auteurs
+}
+
+// Route pour modifier un auteur existant
+#[Route('/editAuthor/{id}', name: 'editAuthor')]
+public function editAuthor(int $id, AuthorRepository $authorRepository, EntityManagerInterface $em, Request $request): Response
+{
+    $author = $authorRepository->find($id); // Recherche l’auteur à modifier
+    $form = $this->createForm(AuthorForm::class, $author); // Crée un formulaire prérempli avec les données de l’auteur
+    $form->handleRequest($request); // Traite la requête HTTP et remplit le formulaire
+
+    if ($form->isSubmitted() && $form->isValid()) // Vérifie si le formulaire est soumis et valide
+    {
+        $em->persist($author); // Prépare l’auteur modifié à être enregistré
+        $em->flush(); // Enregistre les modifications dans la base
+        return $this->redirectToRoute('showAllAuthors'); // Redirige vers la liste des auteurs
     }
 
-    #[Route('/deleteAuthor/{id}', name: 'deleteAuthor')]
-    public function deleteAuthor(int $id, AuthorRepository $authorRepository, EntityManagerInterface $em): Response
-    {
-        $author=$authorRepository->find($id);
-        $em->remove($author);
-        $em->flush();
-        return $this->redirectToRoute('showAllAuthors'); 
-    }
+    return $this->render('author/addAuthor.html.twig', [ // Réutilise le même template que pour l'ajout
+        'form' => $form->createView()
+    ]);
+}
 
-    #[Route('/editAuthor/{id}', name: 'editAuthor')]
-    public function editAuthor(int $id, AuthorRepository $authorRepository, EntityManagerInterface $em, Request $request): Response
-    {
-        $author=$authorRepository->find($id);
-        $form=$this->createForm(AuthorForm::class,$author);
-        $form->handleRequest($request);
+// Route pour afficher les auteurs correspondant à un email et un username donnés
+#[Route('/authorByEmail/{email}/{username}', name: 'authorByEmail')]
+public function authorByEmail(string $email, string $username, AuthorRepository $authorRepository): Response
+{
+    $authors = $authorRepository->findByUsernameAndEmail($username, $email); // Récupère les auteurs correspondants au username et à l’email
+    return $this->render('author/authorByEmail.html.twig', [ // Rend la vue avec les auteurs trouvés
+        'authors' => $authors
+    ]);
+}
 
-        if ($form->isSubmitted() && $form->isValid())
-        {
-            $em->persist($author);
-            $em->flush();
-            return $this->redirectToRoute('showAllAuthors');
-        }
-        return $this->render('author/addAuthor.html.twig', [
-            'form' => $form->createView()
-        ]);
-    }
-    #[Route('/authorByEmail/{email}/{username}', name: 'authorByEmail')]
-    public function authorByEmail(string $email, string $username, AuthorRepository $authorRepository): Response
-    {
-        $authors=$authorRepository->findByUsernameAndEmail($username, $email);
-        return $this->render('author/authorByEmail.html.twig', [
-            'authors' => $authors
-        ]);
-    }
     
 
 
